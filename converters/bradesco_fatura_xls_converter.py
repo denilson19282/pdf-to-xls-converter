@@ -45,6 +45,11 @@ class BradescoFaturaXLSConverter(XLSConverterInterface):
                         continue
 
                     date, description, _, value = columns
+
+                    unwanted_entries = ['SALDO ANTERIOR', 'PAGTO. POR DEB EM C/C', 'PAG BOLETO BANCARIO']
+                    if any(entry in description for entry in unwanted_entries):
+                        continue
+
                     date = f"{date}/{self.due_year}"
                     value = float(value.replace('.', '').replace(',', '.').replace(' ', ''))
                     category = self._find_category(description)
