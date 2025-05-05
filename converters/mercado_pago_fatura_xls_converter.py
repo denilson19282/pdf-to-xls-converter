@@ -1,10 +1,13 @@
 import re
 from pdf_reader import PDFReader
 from xls_generator import Register, XLSGenerator
-from converters.pdf_xls_converter_interface import PDFXLSConverterInterface
+from converters.xls_converter_interface import XLSConverterInterface
 
-class MercadoPagoFaturaXLSConverter(PDFXLSConverterInterface):
+class MercadoPagoFaturaXLSConverter(XLSConverterInterface):
     def __init__(self, pdf_path: str, xls_path: str, pdf_password: str = None):
+        if not pdf_path.lower().endswith('.pdf'):
+            raise ValueError("The provided file is not a PDF file.")
+        
         self.pdf_reader = PDFReader(pdf_path, pdf_password, skip_page_start = 1, skip_page_end = 3, use_ocr = True)
         self.xls_generator = XLSGenerator(xls_path)
 

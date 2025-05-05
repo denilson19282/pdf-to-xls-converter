@@ -12,42 +12,49 @@ from converters.inter_1_fatura_xls_converter import Inter1FaturaXLSConverter
 from converters.inter_2_fatura_xls_converter import Inter2FaturaXLSConverter
 from converters.nubank_1_fatura_xls_converter import Nubank1FaturaXLSConverter
 from converters.nubank_2_fatura_xls_converter import Nubank2FaturaXLSConverter
-
+from converters.bradesco_fatura_xls_converter import BradescoFaturaXLSConverter
 
 class ConverterType(Enum):
-    MERCADO_PAGO_FATURA = 'Mercado Pago Fatura'
-    MERCADO_PAGO_EXTRATO = 'Mercado Pago Extrato'
-    INTER_FATURA_1 = 'Inter Fatura 1'
-    INTER_FATURA_2 = 'Inter Fatura 2'
-    NUBANK_FATURA_1 = 'Nubank Fatura 1'
-    NUBANK_FATURA_2 = 'Nubank Fatura 2'
+    MERCADO_PAGO_FATURA = 'Mercado Pago Fatura (PDF)'
+    MERCADO_PAGO_EXTRATO = 'Mercado Pago Extrato (PDF)'
+    INTER_FATURA_1 = 'Inter Fatura 1 (PDF)'
+    INTER_FATURA_2 = 'Inter Fatura 2 (PDF)'
+    NUBANK_FATURA_1 = 'Nubank Fatura 1 (PDF)'
+    NUBANK_FATURA_2 = 'Nubank Fatura 2 (PDF)'
+    BRADESCO_FATURA = 'Bradesco Fatura (CSV)'
 
 class PDFtoXLSApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("PDF to XLS Converter")
+        self.root.title("XLS Converter")
         self.root.minsize(500, 150)
 
-        self.pdf_path = tk.StringVar()
+        self.file_path = tk.StringVar()
         self.password = tk.StringVar()
+        self.due_year = tk.StringVar()
+        self.due_month = tk.StringVar()
         self.converter_type = tk.StringVar(value=ConverterType.MERCADO_PAGO_FATURA.value)
         
-        default_pdf_path = os.path.join(os.getcwd(), 'input/mercado_pago/Fatura_MP_20240110.pdf')
-        self.pdf_path.set(default_pdf_path)
+        default_file_path = os.path.join(os.getcwd(), 'input/mercado_pago/Fatura_MP_20240110.pdf')
+        self.file_path.set(default_file_path)
+
+        self.due_year.set('2025')
+        self.due_month.set('03')
 
         self.create_widgets()
 
     def create_widgets(self):
-        tk.Label(self.root, text="Select PDF File:").grid(row=0, column=0, padx=10, pady=10)
-        tk.Entry(self.root, textvariable=self.pdf_path, width=50).grid(row=0, column=1, padx=10, pady=10)
-        tk.Button(self.root, text="Browse", command=self.browse_pdf).grid(row=0, column=2, padx=10, pady=10)
+        tk.Label(self.root, text="Select File:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        tk.Entry(self.root, textvariable=self.file_path, width=50).grid(row=0, column=1, padx=10, pady=10, sticky="w")
+        tk.Button(self.root, text="Browse", command=self.browse_file).grid(row=0, column=2, padx=10, pady=10, sticky="w")
 
-        tk.Label(self.root, text="PDF Password:").grid(row=1, column=0, padx=10, pady=10)
-        tk.Entry(self.root, textvariable=self.password, show="*", width=50).grid(row=1, column=1, padx=10, pady=10)
+        tk.Label(self.root, text="PDF Password:").grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        tk.Entry(self.root, textvariable=self.password, show="*", width=50).grid(row=1, column=1, padx=10, pady=10, sticky="w")
         
-        tk.Label(self.root, text="Converter Type:").grid(row=2, column=0, padx=10, pady=10)
+        tk.Label(self.root, text="Converter Type:").grid(row=2, column=0, padx=10, pady=10, sticky="w")
         self.converter_type_combobox = ttk.Combobox(self.root, textvariable=self.converter_type, values=[ct.value for ct in ConverterType])
-        self.converter_type_combobox.grid(row=2, column=1, padx=10, pady=10)
+        self.converter_type_combobox.grid(row=2, column=1, padx=10, pady=10, sticky="w")
+        self.converter_type_combobox.bind("<<ComboboxSelected>>", self.on_converter_type_change)
 
         tk.Button(self.root, text="Convert", command=self.generate_xls).grid(row=4, column=1, padx=10, pady=10)
 
@@ -69,38 +76,60 @@ class PDFtoXLSApp:
         self.root.grid_columnconfigure(3, weight=1)
         self.root.grid_columnconfigure(4, weight=1)
         self.root.grid_columnconfigure(5, weight=1)
-        
-    def browse_pdf(self):
-        file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
+
+        self.due_year_label = tk.Label(self.root, text="Due Year:")
+        self.due_year_entry = tk.Entry(self.root, textvariable=self.due_year,  width=10)
+        self.due_month_label = tk.Label(self.root, text="Due Month:")
+        self.due_month_entry = tk.Entry(self.root, textvariable=self.due_month, width=10)
+    
+    def on_converter_type_change(self, event):
+        selected_converter = self.converter_type.get()
+        if selected_converter == ConverterType.BRADESCO_FATURA.value:
+            self.due_year_label.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+            self.due_year_entry.grid(row=3, column=1, padx=10, pady=10, sticky="w")
+            self.due_month_label.grid(row=3, column=2, padx=10, pady=10, sticky="w")
+            self.due_month_entry.grid(row=3, column=3, padx=10, pady=10, sticky="w")
+        else:
+            self.due_year_label.grid_remove()
+            self.due_year_entry.grid_remove()
+            self.due_month_label.grid_remove()
+            self.due_month_entry.grid_remove()
+
+    def browse_file(self):
+        file_path = filedialog.askopenfilename(filetypes=[("PDF and CSV files", "*.pdf *.csv")])
         if file_path:
-            self.pdf_path.set(file_path)
+            self.file_path.set(file_path)
 
     def generate_xls(self):
-        pdf_path = self.pdf_path.get()
+        file_path = self.file_path.get()
         password = self.password.get()
+        due_year = self.due_year_entry.get()
+        due_month = self.due_month_entry.get()
         
-        pdf_file_name = os.path.basename(pdf_path)
-        xls_file_name = os.path.splitext(pdf_file_name)[0] + '.xls'
+        origin_file_name = os.path.basename(file_path)
+        xls_file_name = os.path.splitext(origin_file_name)[0] + '.xls'
         xls_path = os.path.join('output', xls_file_name)
 
-        if not pdf_path:
-            messagebox.showerror("Error", "Please select a PDF file path.")
+        if not file_path:
+            messagebox.showerror("Error", "Please select a file path.")
             return
 
         try:
             selected_converter = ConverterType(self.converter_type.get())
             if selected_converter == ConverterType.MERCADO_PAGO_FATURA:
-                converter = MercadoPagoFaturaXLSConverter(pdf_path, xls_path, password)
+                converter = MercadoPagoFaturaXLSConverter(file_path, xls_path, password)
             elif selected_converter == ConverterType.MERCADO_PAGO_EXTRATO:
-                converter = MercadoPagoExtratoXLSConverter(pdf_path, xls_path, password)
+                converter = MercadoPagoExtratoXLSConverter(file_path, xls_path, password)
             elif selected_converter == ConverterType.INTER_FATURA_1:
-                converter = Inter1FaturaXLSConverter(pdf_path, xls_path, password)
+                converter = Inter1FaturaXLSConverter(file_path, xls_path, password)
             elif selected_converter == ConverterType.INTER_FATURA_2:
-                converter = Inter2FaturaXLSConverter(pdf_path, xls_path, password)
+                converter = Inter2FaturaXLSConverter(file_path, xls_path, password)
             elif selected_converter == ConverterType.NUBANK_FATURA_1:
-                converter = Nubank1FaturaXLSConverter(pdf_path, xls_path)
+                converter = Nubank1FaturaXLSConverter(file_path, xls_path)
             elif selected_converter == ConverterType.NUBANK_FATURA_2:
-                converter = Nubank2FaturaXLSConverter(pdf_path, xls_path)
+                converter = Nubank2FaturaXLSConverter(file_path, xls_path)
+            elif selected_converter == ConverterType.BRADESCO_FATURA:
+                converter = BradescoFaturaXLSConverter(file_path, xls_path, due_year, due_month)
             else:
                 raise Exception("Converter not found")
 

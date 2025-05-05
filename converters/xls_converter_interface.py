@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from xls_generator import XLSFile
 
-class PDFXLSConverterInterface(ABC):
+class XLSConverterInterface(ABC):
     @abstractmethod
     def convert(self) -> XLSFile:
         pass

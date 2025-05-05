@@ -1,15 +1,18 @@
 import re
 from pdf_reader import PDFReader
 from xls_generator import Register, XLSGenerator
-from converters.pdf_xls_converter_interface import PDFXLSConverterInterface
+from converters.xls_converter_interface import XLSConverterInterface
 
 month_dict = {
     'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04', 'mai': '05', 'jun': '06', 
     'jul': '07', 'ago': '08', 'set': '09', 'out': '10', 'nov': '11', 'dez': '12'
 }
 
-class MercadoPagoExtratoXLSConverter(PDFXLSConverterInterface):
+class MercadoPagoExtratoXLSConverter(XLSConverterInterface):
     def __init__(self, pdf_path: str, xls_path: str, pdf_password: str = None):
+        if not pdf_path.lower().endswith('.pdf'):
+            raise ValueError("The provided file is not a PDF file.")
+        
         self.pdf_reader = PDFReader(pdf_path, pdf_password)
         self.xls_generator = XLSGenerator(xls_path)
 
